@@ -1,3 +1,4 @@
+// 生成并编译 shader
 function WebGLShader( gl, type, string ) {
 
 	const shader = gl.createShader( type );

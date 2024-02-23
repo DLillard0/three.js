@@ -124,6 +124,7 @@ import * as points from './ShaderLib/points.glsl.js';
 import * as shadow from './ShaderLib/shadow.glsl.js';
 import * as sprite from './ShaderLib/sprite.glsl.js';
 
+// 储存了 Shader 片段的对应信息
 export const ShaderChunk = {
 	alphahash_fragment: alphahash_fragment,
 	alphahash_pars_fragment: alphahash_pars_fragment,

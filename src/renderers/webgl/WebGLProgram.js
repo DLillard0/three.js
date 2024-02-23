@@ -469,6 +469,8 @@ function generateCubeUVSize( parameters ) {
 
 }
 
+// 储存了原生的 webgl program shader 等信息
+// 在本函数中会发生着色器的源码动态生成、编译、附加到 program 等操作
 function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 
 	// TODO Send this event to Three.js DevTools
