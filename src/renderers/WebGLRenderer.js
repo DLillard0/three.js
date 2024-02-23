@@ -97,12 +97,15 @@ class WebGLRenderer {
 		const uintClearColor = new Uint32Array( 4 );
 		const intClearColor = new Int32Array( 4 );
 
+    // 当前执行渲染时的 renderList 对象，储存 透明物体、透射物体、不透明物体 列表
 		let currentRenderList = null;
+    // 当前执行渲染时的 renderState 对象，储存 光照和阴影 信息
 		let currentRenderState = null;
 
 		// render() can be called from within a callback triggered by another render.
 		// We track this so that the nested render call gets its list and state isolated from the parent render call.
 
+    // 这里的两个 stack 是为了做嵌套渲染时的 renderList 和 renderState 保存和隔离
 		const renderListStack = [];
 		const renderStateStack = [];
 
@@ -134,11 +137,15 @@ class WebGLRenderer {
 
 		// scene graph
 
+    // 定义渲染器是否应对对象进行排序。默认是true.
+    // 说明: 排序用于尝试正确渲染出具有一定透明度的对象。根据定义，排序可能不总是有用。
+    // 根据应用的需求，可能需要关闭排序并使其他方法来处理透明度的渲染，例如，手动确定每个对象的渲染顺序。
 		this.sortObjects = true;
 
 		// user-defined clipping
 
 		this.clippingPlanes = [];
+    // 定义渲染器是否考虑对象级剪切平面。
 		this.localClippingEnabled = false;
 
 		// physically based shading
@@ -158,6 +165,7 @@ class WebGLRenderer {
 
 		const _this = this;
 
+    // 是否丢失 canvas 的 webgl 上下文标志位
 		let _isContextLost = false;
 
 		// internal state cache
@@ -191,6 +199,8 @@ class WebGLRenderer {
 
 		// frustum
 
+    // 视锥体
+    // 用于确定相机视野内的东西。 它有助于加速渲染过程——位于摄像机视锥体外的物体可以安全地排除在渲染之外。
 		const _frustum = new Frustum();
 
 		// clipping
@@ -221,6 +231,7 @@ class WebGLRenderer {
 
 		let _gl = context;
 
+    // 获取支持的 webgl 上下文
 		function getContext( contextNames, contextAttributes ) {
 
 			for ( let i = 0; i < contextNames.length; i ++ ) {
@@ -317,6 +328,7 @@ class WebGLRenderer {
 
 		let utils, bindingStates, uniformsGroups;
 
+    // 初始化一些字典对象
 		function initGLContext() {
 
 			extensions = new WebGLExtensions( _gl );
@@ -776,13 +788,16 @@ class WebGLRenderer {
 		}
 
 		// Buffer rendering
-
+    // 直接渲染缓冲区
 		this.renderBufferDirect = function ( camera, scene, geometry, material, object, group ) {
 
+      // 渲染雾的时候可能 scene 为 null，此时设置为 _emptyScene
 			if ( scene === null ) scene = _emptyScene; // renderBufferDirect second parameter used to be fog (could be null)
 
+      // 判断正面的顺时针？
 			const frontFaceCW = ( object.isMesh && object.matrixWorld.determinant() < 0 );
 
+      // 设置了一些全局 uniform 变量？
 			const program = setProgram( camera, scene, geometry, material, object );
 
 			state.setMaterial( material, frontFaceCW );
@@ -790,19 +805,20 @@ class WebGLRenderer {
 			//
 
 			let index = geometry.index;
+      // 范围系数
 			let rangeFactor = 1;
 
+      // 是否渲染线框
 			if ( material.wireframe === true ) {
 
 				index = geometries.getWireframeAttribute( geometry );
 
 				if ( index === undefined ) return;
 
+        // 要渲染线框范围系数调整为 2
 				rangeFactor = 2;
 
 			}
-
-			//
 
 			const drawRange = geometry.drawRange;
 			const position = geometry.attributes.position;
@@ -855,6 +871,7 @@ class WebGLRenderer {
 
 				if ( material.wireframe === true ) {
 
+          // 线框模式
 					state.setLineWidth( material.wireframeLinewidth * getTargetPixelRatio() );
 					renderer.setMode( _gl.LINES );
 
@@ -898,10 +915,12 @@ class WebGLRenderer {
 
 			if ( object.isBatchedMesh ) {
 
+        // 是否是批处理网格
 				renderer.renderMultiDraw( object._multiDrawStarts, object._multiDrawCounts, object._multiDrawCount );
 
 			} else if ( object.isInstancedMesh ) {
 
+        // 是否是实例化网格
 				renderer.renderInstances( drawStart, drawCount, object.count );
 
 			} else if ( geometry.isInstancedBufferGeometry ) {
@@ -913,6 +932,7 @@ class WebGLRenderer {
 
 			} else {
 
+        // 调用 webgl 原生 draw API 进行绘制
 				renderer.render( drawStart, drawCount );
 
 			}
@@ -1147,12 +1167,15 @@ class WebGLRenderer {
 
 			// update scene graph
 
+      // 从场景图根节点开始往下更新节点的世界矩阵和本地矩阵
 			if ( scene.matrixWorldAutoUpdate === true ) scene.updateMatrixWorld();
 
 			// update camera matrices and frustum
 
+      // 相机不一定要添加到场景树中，如果添加了则不用更新，如果没添加这一步会更新世界矩阵和本地矩阵
 			if ( camera.parent === null && camera.matrixWorldAutoUpdate === true ) camera.updateMatrixWorld();
 
+      // 扩展现实 XR 相关
 			if ( xr.enabled === true && xr.isPresenting === true ) {
 
 				if ( xr.cameraAutoUpdate === true ) xr.updateCamera( camera );
@@ -1161,39 +1184,54 @@ class WebGLRenderer {
 
 			}
 
-			//
+			// 调用 scene 的 onBeforeRender 回调函数
 			if ( scene.isScene === true ) scene.onBeforeRender( _this, scene, camera, _currentRenderTarget );
 
+      // 根据 scene 和嵌套渲染深度获取 renderState 对象
 			currentRenderState = renderStates.get( scene, renderStateStack.length );
+      // 初始化 renderState
 			currentRenderState.init();
 
+      // 添加到 renderStateStack 中，这样当嵌套着再次调用 render 时就会重新创建 renderState，并且原来的也会被保留
 			renderStateStack.push( currentRenderState );
 
+      // matrixWorldInverse 为相机的世界变换矩阵的逆矩阵，也就是 viewMatrix 视图矩阵
+      // projectionMatrix 为投影矩阵
+      // _projScreenMatrix 提前计算世界坐标投影到标准立方体的矩阵：投影视图矩阵
 			_projScreenMatrix.multiplyMatrices( camera.projectionMatrix, camera.matrixWorldInverse );
+      // 根据投影视图矩阵 _projScreenMatrix 来设置当前视椎体的六个面。
 			_frustum.setFromProjectionMatrix( _projScreenMatrix );
 
+      // 剪切平面相关
 			_localClippingEnabled = this.localClippingEnabled;
 			_clippingEnabled = clipping.init( this.clippingPlanes, _localClippingEnabled );
 
+      // 根据 scene 和嵌套渲染深度获取 renderList 对象
 			currentRenderList = renderLists.get( scene, renderListStack.length );
+      // 初始化 renderList
 			currentRenderList.init();
 
+      // 添加到 renderListStack 中
 			renderListStack.push( currentRenderList );
 
+      // 从场景树根节点开始预处理所有节点
 			projectObject( scene, camera, 0, _this.sortObjects );
 
+      // 清理未激活对象
 			currentRenderList.finish();
 
 			if ( _this.sortObjects === true ) {
 
+        // 需要排序，对渲染对象进行排序
 				currentRenderList.sort( _opaqueSort, _transparentSort );
 
 			}
 
-			//
-
+			// 准备工作结束
+      // render.frame + 1
 			this.info.render.frame ++;
 
+      // 待解读：阴影渲染
 			if ( _clippingEnabled === true ) clipping.beginShadows();
 
 			const shadowsArray = currentRenderState.state.shadowsArray;
@@ -1202,13 +1240,11 @@ class WebGLRenderer {
 
 			if ( _clippingEnabled === true ) clipping.endShadows();
 
-			//
 
 			if ( this.info.autoReset === true ) this.info.reset();
 
 
-			//
-
+      // 待解读：背景渲染
 			if ( xr.enabled === false || xr.isPresenting === false || xr.hasDepthSensing() === false ) {
 
 				background.render( currentRenderList, scene );
@@ -1216,11 +1252,14 @@ class WebGLRenderer {
 			}
 
 			// render scene
+      // 开始渲染场景树
 
+      // 安装光源信息
 			currentRenderState.setupLights( _this._useLegacyLights );
 
 			if ( camera.isArrayCamera ) {
 
+        // 如果是摄像机阵列，遍历对每个相机运行 renderScene
 				const cameras = camera.cameras;
 
 				for ( let i = 0, l = cameras.length; i < l; i ++ ) {
@@ -1233,11 +1272,10 @@ class WebGLRenderer {
 
 			} else {
 
+        // 对相机运行 renderScene
 				renderScene( currentRenderList, scene, camera );
 
 			}
-
-			//
 
 			if ( _currentRenderTarget !== null ) {
 
@@ -1251,20 +1289,22 @@ class WebGLRenderer {
 
 			}
 
-			//
-
+      // 运行 scene 的 onAfterRender 注册回调
 			if ( scene.isScene === true ) scene.onAfterRender( _this, scene, camera );
 
 			// _gl.finish();
 
+      // 清理本次渲染的一些绑定状态
 			bindingStates.resetDefaultState();
 			_currentMaterialId = - 1;
 			_currentCamera = null;
 
+      // 从 renderStateStack 弹出当前的 renderState
 			renderStateStack.pop();
 
 			if ( renderStateStack.length > 0 ) {
 
+        // 如果栈内还有 renderState，将 currentRenderState 置为最后一个
 				currentRenderState = renderStateStack[ renderStateStack.length - 1 ];
 
 			} else {
@@ -1273,10 +1313,12 @@ class WebGLRenderer {
 
 			}
 
+      // 从 renderListStack 弹出当前的 renderList
 			renderListStack.pop();
 
 			if ( renderListStack.length > 0 ) {
 
+        // 如果栈内还有 renderList，将 currentRenderList 置为最后一个
 				currentRenderList = renderListStack[ renderListStack.length - 1 ];
 
 			} else {
@@ -1287,48 +1329,69 @@ class WebGLRenderer {
 
 		};
 
+    // 递归预处理对象
 		function projectObject( object, camera, groupOrder, sortObjects ) {
 
+      // 如果当前对象不可见，那么不处理当前对象以及它的所有子节点对象
 			if ( object.visible === false ) return;
 
+      // 测试物体的层级是否和当前相机的层级相与大于 0，只有至少与激活相机的一个层级相同才能可见
+      // 就算与相机不在同层级也不影响处理子节点，这是 layer 与 visible 属性的区别
 			const visible = object.layers.test( camera.layers );
 
+      // 如果物体可见，根据物体类型分别做处理
 			if ( visible ) {
 
-				if ( object.isGroup ) {
+        if ( object.isGroup ) {
 
+          // 物体属于 Group
+          // 设置一下 groupOrder 为当前 group 的 renderOrder，影响子节点对象
 					groupOrder = object.renderOrder;
 
 				} else if ( object.isLOD ) {
 
+          // 物体属于 LOD，多细节层次对象，每个层级关联一个集合体
+          // update 是基于每个level中的 object 和 camera（摄像机）之间的距离，来设置其可见性
 					if ( object.autoUpdate === true ) object.update( camera );
 
 				} else if ( object.isLight ) {
 
+          // 物体属于光源
+          // 在 renderState 的 lightsArray 中添加
 					currentRenderState.pushLight( object );
 
 					if ( object.castShadow ) {
 
+            // 如果光源开启 castShadow
+            // 在 renderState 的 shadowsArray 中添加
 						currentRenderState.pushShadow( object );
 
 					}
 
 				} else if ( object.isSprite ) {
 
+          // 当前物体是一个 Sprite 精灵
+          // 如果 frustumCulled 为 false 则不检查视锥可见性直接继续处理，
+          // 如果为 true 检查精灵sprite是否与截锥体相交，不相交不处理
 					if ( ! object.frustumCulled || _frustum.intersectsSprite( object ) ) {
 
 						if ( sortObjects ) {
 
+              // 如果需要排序物体，计算物体坐标左乘 MVP 矩阵保存到 _vector3 临时变量中
+              // 等于求本地（0，0，0）坐标到投影空间的坐标
 							_vector3.setFromMatrixPosition( object.matrixWorld )
 								.applyMatrix4( _projScreenMatrix );
 
 						}
 
+            // 获取物体的 buffergeometry
 						const geometry = objects.update( object );
 						const material = object.material;
 
+            // 如果物体的材质可见，那么添加到 renderList 中
 						if ( material.visible ) {
 
+              // 这里 _vector3.z 就是传入了深度信息，记录在 renderItem 上，用于渲染排序
 							currentRenderList.push( object, geometry, material, groupOrder, _vector3.z, null );
 
 						}
@@ -1337,25 +1400,35 @@ class WebGLRenderer {
 
 				} else if ( object.isMesh || object.isLine || object.isPoints ) {
 
+          // 当前物体是一个网格、线或者点
+          // 根据 frustumCulled 看是否需要做视锥可见性检查
 					if ( ! object.frustumCulled || _frustum.intersectsObject( object ) ) {
 
+            // 获取物体的 buffergeometry
 						const geometry = objects.update( object );
 						const material = object.material;
 
 						if ( sortObjects ) {
 
+              // 需要排序物体渲染顺序
+              // 如果物体的 boundingSphere 包围球不等于 undefined，说明有这个属性
 							if ( object.boundingSphere !== undefined ) {
 
+                // 如果为 null 则重新生成包围球
 								if ( object.boundingSphere === null ) object.computeBoundingSphere();
+                // 将包围球的中心作为 _vector3 的值
 								_vector3.copy( object.boundingSphere.center );
 
 							} else {
 
+                // 包围球不在 object 上那么就是几何 geometry 上
 								if ( geometry.boundingSphere === null ) geometry.computeBoundingSphere();
 								_vector3.copy( geometry.boundingSphere.center );
 
 							}
 
+              // 将 _vector3 储存为投影空间的坐标
+              // 等于求包围球中心坐标到投影空间的坐标
 							_vector3
 								.applyMatrix4( object.matrixWorld )
 								.applyMatrix4( _projScreenMatrix );
@@ -1364,6 +1437,8 @@ class WebGLRenderer {
 
 						if ( Array.isArray( material ) ) {
 
+              // geometry.groups 决定着将当前几何体分割成组进行渲染，每个部分都会在单独的 WebGL 的 draw call 中进行绘制。
+              // 该方法可以让当前的 bufferGeometry 可以使用一个材质队列进行描述。
 							const groups = geometry.groups;
 
 							for ( let i = 0, l = groups.length; i < l; i ++ ) {
@@ -1373,6 +1448,7 @@ class WebGLRenderer {
 
 								if ( groupMaterial && groupMaterial.visible ) {
 
+                  // 判断材质可见性决定是否添加到 renderList
 									currentRenderList.push( object, geometry, groupMaterial, groupOrder, _vector3.z, group );
 
 								}
@@ -1381,6 +1457,7 @@ class WebGLRenderer {
 
 						} else if ( material.visible ) {
 
+              // 单个材质，直接判断可见性决定是否添加到 renderList
 							currentRenderList.push( object, geometry, material, groupOrder, _vector3.z, null );
 
 						}
@@ -1393,6 +1470,7 @@ class WebGLRenderer {
 
 			const children = object.children;
 
+      // 递归处理子节点对象
 			for ( let i = 0, l = children.length; i < l; i ++ ) {
 
 				projectObject( children[ i ], camera, groupOrder, sortObjects );
@@ -1401,30 +1479,41 @@ class WebGLRenderer {
 
 		}
 
+    // 渲染场景树
 		function renderScene( currentRenderList, scene, camera, viewport ) {
 
+      // 获取三种物体列表
 			const opaqueObjects = currentRenderList.opaque;
 			const transmissiveObjects = currentRenderList.transmissive;
 			const transparentObjects = currentRenderList.transparent;
 
+      // 根据相机安装光源信息
 			currentRenderState.setupLightsView( camera );
 
+      // 设置裁剪平面信息
 			if ( _clippingEnabled === true ) clipping.setGlobalState( _this.clippingPlanes, camera );
 
+      // 先渲染透射物体？
 			if ( transmissiveObjects.length > 0 ) renderTransmissionPass( opaqueObjects, transmissiveObjects, scene, camera );
 
+      // 设置 viewport 信息
 			if ( viewport ) state.viewport( _currentViewport.copy( viewport ) );
 
+      // 调用 renderObjects 去渲染三个物体列表
+      // 先渲染不透明物体
 			if ( opaqueObjects.length > 0 ) renderObjects( opaqueObjects, scene, camera );
+      // 再透射物体
 			if ( transmissiveObjects.length > 0 ) renderObjects( transmissiveObjects, scene, camera );
+      // 最后是透明物体
 			if ( transparentObjects.length > 0 ) renderObjects( transparentObjects, scene, camera );
 
 			// Ensure depth buffer writing is enabled so it can be cleared on next render
-
+      // 确保启用深度缓冲区写入，以便在下次渲染时将其清除
 			state.buffers.depth.setTest( true );
 			state.buffers.depth.setMask( true );
 			state.buffers.color.setMask( true );
 
+      // 作用？
 			state.setPolygonOffset( false );
 
 		}
@@ -1433,6 +1522,7 @@ class WebGLRenderer {
 
 			const overrideMaterial = scene.isScene === true ? scene.overrideMaterial : null;
 
+      // 如果 scene 有强制指定的材质去渲染，直接跳过本流程
 			if ( overrideMaterial !== null ) {
 
 				return;
@@ -1539,8 +1629,10 @@ class WebGLRenderer {
 
 		}
 
+    // 渲染各种类型的 renderList 列表
 		function renderObjects( renderList, scene, camera ) {
 
+      // 设置有没有场景指定的材质
 			const overrideMaterial = scene.isScene === true ? scene.overrideMaterial : null;
 
 			for ( let i = 0, l = renderList.length; i < l; i ++ ) {
@@ -1549,11 +1641,14 @@ class WebGLRenderer {
 
 				const object = renderItem.object;
 				const geometry = renderItem.geometry;
+        // 有指定材质用指定材质
 				const material = overrideMaterial === null ? renderItem.material : overrideMaterial;
 				const group = renderItem.group;
 
+        // 再次测试物体层级与相机层级，ps：projectObject 时也测试了一次看是否添加到 renderList
 				if ( object.layers.test( camera.layers ) ) {
 
+          // 调用 renderObject 渲染物体
 					renderObject( object, scene, camera, geometry, material, group );
 
 				}
@@ -1562,41 +1657,54 @@ class WebGLRenderer {
 
 		}
 
+    // 渲染物体
 		function renderObject( object, scene, camera, geometry, material, group ) {
 
+      // 运行 onBeforeRender 注册回调
 			object.onBeforeRender( _this, scene, camera, geometry, material, group );
 
+      // 计算模型视图矩阵
+      // modelViewMatrix 会直接传递给着色器
 			object.modelViewMatrix.multiplyMatrices( camera.matrixWorldInverse, object.matrixWorld );
+      // 根据模型视图矩阵去设置法线变换矩阵（正规矩阵），为三维矩阵
 			object.normalMatrix.getNormalMatrix( object.modelViewMatrix );
 
+      // 运行材质的 onBeforeRender 注册回调
 			material.onBeforeRender( _this, scene, camera, geometry, object, group );
 
 			if ( material.transparent === true && material.side === DoubleSide && material.forceSinglePass === false ) {
 
+        // 材质是透明材质，又是双面渲染，而且 forceSinglePass 强制单通道渲染也关闭的情况下，进行两次渲染
 				material.side = BackSide;
 				material.needsUpdate = true;
+        // 渲染背面
 				_this.renderBufferDirect( camera, scene, geometry, material, object, group );
 
 				material.side = FrontSide;
 				material.needsUpdate = true;
+        // 渲染前面
 				_this.renderBufferDirect( camera, scene, geometry, material, object, group );
 
 				material.side = DoubleSide;
 
 			} else {
 
+        // 通过 renderBufferDirect 渲染物体
 				_this.renderBufferDirect( camera, scene, geometry, material, object, group );
 
 			}
 
+      // 运行 onAfterRender 注册回调
 			object.onAfterRender( _this, scene, camera, geometry, material, group );
 
 		}
 
+    // 根据材质设置了一些全局的 uniform 变量？
 		function getProgram( material, scene, object ) {
 
 			if ( scene.isScene !== true ) scene = _emptyScene; // scene could be a Mesh, Line, Points, ...
 
+      // 根据 material 去获取材质属性缓存
 			const materialProperties = properties.get( material );
 
 			const lights = currentRenderState.state.lights;
@@ -1618,7 +1726,7 @@ class WebGLRenderer {
 			if ( programs === undefined ) {
 
 				// new material
-
+        // programs 为空说明是新材质
 				material.addEventListener( 'dispose', onMaterialDispose );
 
 				programs = new Map();

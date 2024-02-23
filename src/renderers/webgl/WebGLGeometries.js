@@ -65,6 +65,7 @@ function WebGLGeometries( gl, attributes, info, bindingStates ) {
 
 		if ( geometries[ geometry.id ] === true ) return geometry;
 
+    // 注册 geometry 的销毁事件
 		geometry.addEventListener( 'dispose', onGeometryDispose );
 
 		geometries[ geometry.id ] = true;

@@ -1,3 +1,5 @@
+
+// 调用原生的 webgl drawArrays API 的封装对象
 function WebGLBufferRenderer( gl, extensions, info, capabilities ) {
 
 	const isWebGL2 = capabilities.isWebGL2;

@@ -563,24 +563,30 @@ class Object3D extends EventDispatcher {
 
 	updateMatrix() {
 
+    // 直接通过 TRS 计算最终本地矩阵
 		this.matrix.compose( this.position, this.quaternion, this.scale );
 
+    // 更新完直接设置需要更新世界矩阵
 		this.matrixWorldNeedsUpdate = true;
 
 	}
 
 	updateMatrixWorld( force ) {
 
+    // 先更新本地矩阵
 		if ( this.matrixAutoUpdate ) this.updateMatrix();
 
+    // 这里 force 的作用是在 matrixAutoUpdate 设置为 false 时也可以通过设置 force 去强制更新世界矩阵
 		if ( this.matrixWorldNeedsUpdate || force ) {
 
 			if ( this.parent === null ) {
 
+        // 无父级：worldMatrix === localMatrix
 				this.matrixWorld.copy( this.matrix );
 
 			} else {
 
+        // 有父级：worldMatrix = 父级worldMatrix * localMatrix
 				this.matrixWorld.multiplyMatrices( this.parent.matrixWorld, this.matrix );
 
 			}
@@ -591,8 +597,8 @@ class Object3D extends EventDispatcher {
 
 		}
 
-		// update children
-
+		// 遍历子元素更新子元素的世界和本地矩阵
+    // 由于子元素的世界矩阵依赖父元素的世界矩阵，所以必须从场景树的根节点开始更新
 		const children = this.children;
 
 		for ( let i = 0, l = children.length; i < l; i ++ ) {
@@ -609,6 +615,7 @@ class Object3D extends EventDispatcher {
 
 	}
 
+  // 这个方法可以从当前节点先去找到最远的祖先节点，然后往下更新世界矩阵
 	updateWorldMatrix( updateParents, updateChildren ) {
 
 		const parent = this.parent;

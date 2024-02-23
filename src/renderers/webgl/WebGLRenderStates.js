@@ -1,5 +1,7 @@
 import { WebGLLights } from './WebGLLights.js';
 
+// 渲染状态对象，主要储存本次渲染需要光线和阴影（LightShadow）信息
+// 渲染时可以直接根据该对象获取所有的 Light 和 LightShadow 信息
 function WebGLRenderState( extensions, capabilities ) {
 
 	const lights = new WebGLLights( extensions, capabilities );
@@ -57,6 +59,8 @@ function WebGLRenderState( extensions, capabilities ) {
 
 }
 
+// 以 scene 为键，使用 weakmap 储存的 renderState 字典对象
+// 主要逻辑跟 WebGLRenderLists 一样
 function WebGLRenderStates( extensions, capabilities ) {
 
 	let renderStates = new WeakMap();

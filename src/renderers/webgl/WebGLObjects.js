@@ -1,3 +1,5 @@
+
+// 以 object 为键，使用 weakmap 储存的获取对象 buffergeometry 的字典对象
 function WebGLObjects( gl, geometries, attributes, info ) {
 
 	let updateMap = new WeakMap();
@@ -7,6 +9,7 @@ function WebGLObjects( gl, geometries, attributes, info ) {
 		const frame = info.render.frame;
 
 		const geometry = object.geometry;
+    // 从 geometries 对象上获取 buffergeometry
 		const buffergeometry = geometries.get( object, geometry );
 
 		// Update once per frame

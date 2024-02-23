@@ -1,3 +1,4 @@
+// 以 object 为键的任意属性字典
 function WebGLProperties() {
 
 	let properties = new WeakMap();
