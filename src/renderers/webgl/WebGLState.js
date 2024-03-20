@@ -770,6 +770,7 @@ function WebGLState( gl, extensions, capabilities ) {
 			? setBlending( NoBlending )
 			: setBlending( material.blending, material.blendEquation, material.blendSrc, material.blendDst, material.blendEquationAlpha, material.blendSrcAlpha, material.blendDstAlpha, material.blendColor, material.blendAlpha, material.premultipliedAlpha );
 
+    // 根据材质设置深度缓冲区的状态，例如绘制透明材质会关闭深度缓冲区的写入
 		depthBuffer.setFunc( material.depthFunc );
 		depthBuffer.setTest( material.depthTest );
 		depthBuffer.setMask( material.depthWrite );
