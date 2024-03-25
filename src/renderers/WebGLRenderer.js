@@ -2009,6 +2009,7 @@ class WebGLRenderer {
 			let refreshMaterial = false;
 			let refreshLights = false;
 
+      // 获取 program 的 uniform 管理对象
 			const p_uniforms = program.getUniforms(),
 				m_uniforms = materialProperties.uniforms;
 

@@ -14,13 +14,16 @@ function main() {
   const camera = new THREE.PerspectiveCamera(fov, aspect, near, far)
   camera.position.z = 2
 
-  const color = 0xFFFFFF
-  const intensity = 3
-  const light = new THREE.DirectionalLight(color, intensity)
-  light.position.set(-1, 2, 4)
-
   const scene = new THREE.Scene()
-  scene.add(light)
+
+  const ambientLight = new THREE.AmbientLight(0xFFFFFF, 2)
+  scene.add(ambientLight)
+
+  // const color = 0xFFFFFF
+  // const intensity = 3
+  // const light = new THREE.DirectionalLight(color, intensity)
+  // light.position.set(-1, 2, 4)
+  // scene.add(light)
 
   const boxWidth = 1
   const boxHeight = 1
@@ -37,8 +40,8 @@ function main() {
 
   const cubes = [
     makeInstance(geometry, 0x44aa88, 0),
-    makeInstance(geometry, 0x8844aa, -2),
-    makeInstance(geometry, 0xaa8844, 2),
+    // makeInstance(geometry, 0x8844aa, -2),
+    // makeInstance(geometry, 0xaa8844, 2),
   ]
 
   function render(time) {

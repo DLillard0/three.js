@@ -1127,6 +1127,7 @@ class WebGLUniforms {
 
 			if ( v.needsUpdate !== false ) {
 
+        // console.log(u.id, v.value);
 				// note: always updating when .needsUpdate is undefined
 				u.setValue( gl, v.value, textures );
 
