@@ -118,6 +118,7 @@ function WebGLMaterials( renderer, properties ) {
 
 		if ( material.color ) {
 
+      // diffuse 的值就是材质的 color 属性
 			uniforms.diffuse.value.copy( material.color );
 
 		}

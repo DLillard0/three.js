@@ -13,6 +13,7 @@ class MeshPhongMaterial extends Material {
 
 		this.type = 'MeshPhongMaterial';
 
+    // 定义 color 等于定义 diffuse
 		this.color = new Color( 0xffffff ); // diffuse
 		this.specular = new Color( 0x111111 );
 		this.shininess = 30;
