@@ -17,6 +17,9 @@ function main() {
 
   const scene = new THREE.Scene()
 
+  const axes = new THREE.AxesHelper(8)
+  scene.add(axes)
+
   const ambientLight = new THREE.AmbientLight(0xFFFFFF, 1)
   scene.add(ambientLight)
 
@@ -28,13 +31,13 @@ function main() {
     scene.add(light)
   }
 
-  // {
-  //   const color = 0xFFFF00
-  //   const intensity = 3
-  //   const light = new THREE.PointLight(color, intensity)
-  //   light.position.set(1, 2, 4)
-  //   scene.add(light)
-  // }
+  {
+    const color = 0xFFFFFF
+    const intensity = 30
+    const light = new THREE.PointLight(color, intensity)
+    light.position.set(1.5, 0, -0.5)
+    scene.add(light)
+  }
 
   const boxWidth = 2
   const boxHeight = 2
