@@ -514,6 +514,7 @@ function WebGLLights( extensions, capabilities ) {
 
 				uniforms.direction.setFromMatrixPosition( light.matrixWorld );
 				vector3.setFromMatrixPosition( light.target.matrixWorld );
+        // 用从 target 指向 position 的方向，方便 shader 里面去计算
 				uniforms.direction.sub( vector3 );
 				uniforms.direction.transformDirection( viewMatrix );
 

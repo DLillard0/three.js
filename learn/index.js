@@ -20,13 +20,13 @@ function main() {
   const ambientLight = new THREE.AmbientLight(0xFFFFFF, 1)
   scene.add(ambientLight)
 
-  // {
-  //   const color = 0xFFFFFF
-  //   const intensity = 3
-  //   const light = new THREE.DirectionalLight(color, intensity)
-  //   light.position.set(-1, 2, 4)
-  //   scene.add(light)
-  // }
+  {
+    const color = 0xFFFFFF
+    const intensity = 3
+    const light = new THREE.DirectionalLight(color, intensity)
+    light.position.set(-4, 2, 4)
+    scene.add(light)
+  }
 
   // {
   //   const color = 0xFFFF00
