@@ -17,7 +17,7 @@ function main() {
 
   const scene = new THREE.Scene()
 
-  const axes = new THREE.AxesHelper(5)
+  const axes = new THREE.AxesHelper(8)
   scene.add(axes)
 
   const ambientLight = new THREE.AmbientLight(0xFFFFFF, 1)
@@ -35,7 +35,7 @@ function main() {
     const color = 0xFFFFFF
     const intensity = 30
     const light = new THREE.PointLight(color, intensity)
-    light.position.set(2, 0, -1)
+    light.position.set(1.5, 0, -0.5)
     scene.add(light)
   }
 
