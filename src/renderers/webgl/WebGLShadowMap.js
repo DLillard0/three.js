@@ -83,6 +83,7 @@ function WebGLShadowMap( _renderer, _objects, _capabilities ) {
 		const _state = _renderer.state;
 
 		// Set GL state for depth map.
+    // 设置 webgl 的状态用来获取深度信息
 		_state.setBlending( NoBlending );
 		_state.buffers.color.setClear( 1, 1, 1, 1 );
 		_state.buffers.depth.setTest( true );
@@ -334,10 +335,12 @@ function WebGLShadowMap( _renderer, _objects, _capabilities ) {
 
 		const visible = object.layers.test( camera.layers );
 
+    // 只有 mesh、line、points 可以投影，plane 不能投影
 		if ( visible && ( object.isMesh || object.isLine || object.isPoints ) ) {
 
 			if ( ( object.castShadow || ( object.receiveShadow && type === VSMShadowMap ) ) && ( ! object.frustumCulled || _frustum.intersectsObject( object ) ) ) {
 
+        // 将物体的 mvMat 设置为变化到阴影相机观察坐标系下的矩阵
 				object.modelViewMatrix.multiplyMatrices( shadowCamera.matrixWorldInverse, object.matrixWorld );
 
 				const geometry = _objects.update( object );
@@ -372,7 +375,9 @@ function WebGLShadowMap( _renderer, _objects, _capabilities ) {
 
 					object.onBeforeShadow( _renderer, object, camera, shadowCamera, geometry, depthMaterial, null );
 
+          console.log( '渲染到深度缓冲' );
 					_renderer.renderBufferDirect( shadowCamera, null, geometry, depthMaterial, object, null );
+          console.log( '渲染到深度缓冲完成' );
 
 					object.onAfterShadow( _renderer, object, camera, shadowCamera, geometry, depthMaterial, null );
 

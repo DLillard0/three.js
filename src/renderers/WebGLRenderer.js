@@ -791,7 +791,7 @@ class WebGLRenderer {
     // 直接渲染缓冲区
 		this.renderBufferDirect = function ( camera, scene, geometry, material, object, group ) {
 
-      // 渲染雾的时候可能 scene 为 null，此时设置为 _emptyScene
+      // 渲染雾或者阴影的时候可能 scene 为 null，此时设置为 _emptyScene
 			if ( scene === null ) scene = _emptyScene; // renderBufferDirect second parameter used to be fog (could be null)
 
       // 判断正面的顺时针？
@@ -1234,6 +1234,7 @@ class WebGLRenderer {
       // 待解读：阴影渲染
 			if ( _clippingEnabled === true ) clipping.beginShadows();
 
+      // 获取场景中所有开启阴影的光源列表
 			const shadowsArray = currentRenderState.state.shadowsArray;
 
 			shadowMap.render( shadowsArray, scene, camera );
