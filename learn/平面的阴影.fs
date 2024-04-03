@@ -34,6 +34,7 @@ precision highp float;
 #define HIGH_PRECISION
 #define SHADER_TYPE MeshPhongMaterial
 #define SHADER_NAME 
+#define DOUBLE_SIDED
 #define USE_SHADOWMAP
 #define SHADOWMAP_TYPE_PCF
 uniform mat4 viewMatrix;
@@ -265,6 +266,7 @@ vec4 packDepthToRGBA( const in float v ) {
 	return r * PackUpscale;
 }
 
+// 将纹理颜色转化为深度值
 float unpackRGBAToDepth( const in vec4 v ) {
 	return dot( v, UnpackFactors );
 }
@@ -1004,7 +1006,7 @@ void RE_IndirectDiffuse_BlinnPhong( const in vec3 irradiance, const in vec3 geom
 	*/
 
 	float texture2DCompare( sampler2D depths, vec2 uv, float compare ) {
-
+    // 比纹理记录的深度小则返回 1，说明被挡住了，否则返回 0
 		return step( compare, unpackRGBAToDepth( texture2D( depths, uv ) ) );
 
 	}
@@ -1040,13 +1042,21 @@ void RE_IndirectDiffuse_BlinnPhong( const in vec3 irradiance, const in vec3 geom
 
 		float shadow = 1.0;
 
+    // 转化为光源视角观察坐标系下的点
 		shadowCoord.xyz /= shadowCoord.w;
+    // 阴影贴图偏差，在确定曲面是否在阴影中时，从标准化深度添加或减去多少。
 		shadowCoord.z += shadowBias;
 
 		bool inFrustum = shadowCoord.x >= 0.0 && shadowCoord.x <= 1.0 && shadowCoord.y >= 0.0 && shadowCoord.y <= 1.0;
+    // 是否在视锥体内, shadowCoord.z <= 1.0 ？
 		bool frustumTest = inFrustum && shadowCoord.z <= 1.0;
 
 		if ( frustumTest ) {
+
+    // BasicShadowMap 能够给出没有经过过滤的阴影映射 —— 速度最快，但质量最差。
+    // PCFShadowMap 为默认值，使用Percentage-Closer Filtering (PCF)算法来过滤阴影映射。
+    // PCFSoftShadowMap 和PCFShadowMap一样使用 Percentage-Closer Filtering (PCF) 算法过滤阴影映射，但在使用低分辨率阴影图时具有更好的软阴影。
+    // VSMShadowMap 使用Variance Shadow Map (VSM)算法来过滤阴影映射。当使用VSMShadowMap时，所有阴影接收者也将会投射阴影。
 
 		#if defined( SHADOWMAP_TYPE_PCF )
 
@@ -1061,6 +1071,7 @@ void RE_IndirectDiffuse_BlinnPhong( const in vec3 irradiance, const in vec3 geom
 			float dx3 = dx1 / 2.0;
 			float dy3 = dy1 / 2.0;
 
+      // 取周围像素进行混合
 			shadow = (
 				texture2DCompare( shadowMap, shadowCoord.xy + vec2( dx0, dy0 ), shadowCoord.z ) +
 				texture2DCompare( shadowMap, shadowCoord.xy + vec2( 0.0, dy0 ), shadowCoord.z ) +
